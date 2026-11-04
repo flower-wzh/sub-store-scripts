@@ -1,0 +1,44 @@
+#!name=iMe 去广告
+#!desc=拦截 iMe (com.olcorporation.olai) 自有广告位 + 四家广告联盟（AppLovin / CAS.AI / Pangle 穿山甲 / Bidease）+ 素材 CDN 与统计上报。基于 2026-11-05 两轮抓包。
+#!author=阿岩
+#!system=ios
+
+# ── 重要：Surge 模块只支持 Rule / Script / URL Rewrite / Header Rewrite / Host / IP Rewrite
+# ── 不支持 [Map Local]，写进模块里会被静默忽略（上一版就是栽在这）
+# ── 所以广告接口改用 URL Rewrite 的 reject：正则 + 占位符 _ + reject，三段式缺一不可
+
+[Rule]
+# iMe 自有广告素材 CDN（广告图 / logo）
+DOMAIN,ad.data.imem.me,REJECT-TINYGIF,pre-matching
+DOMAIN-SUFFIX,ad.data.imem.me,REJECT-TINYGIF,pre-matching
+
+# AppLovin MAX 聚合（你的 AWAvenue 规则已挡，这里写死防漏）
+DOMAIN-SUFFIX,applovin.com,REJECT,pre-matching
+DOMAIN-SUFFIX,applvn.com,REJECT,pre-matching
+
+# CAS.AI 聚合与事件上报
+DOMAIN-SUFFIX,cas.ai,REJECT,pre-matching
+
+# Pangle 穿山甲海外版（PAGSDK / TikTokBusinessSDK，2026-11-05 02:19 抓包新增）
+DOMAIN-SUFFIX,pangle.io,REJECT,pre-matching
+DOMAIN-SUFFIX,pangolin-sdk-toutiao.com,REJECT,pre-matching
+DOMAIN-SUFFIX,pglstatp-toutiao.com,REJECT,pre-matching
+
+# Bidease SSP（Liftoff 系，ktor-client SDK，日志走 sdklog / ssp-track）
+DOMAIN-SUFFIX,bidease.com,REJECT,pre-matching
+# 竞价回调域名，抓到即用，没抓到可注释
+DOMAIN-SUFFIX,liftoff.io,REJECT,pre-matching
+
+# 统计 / 归因（不影响功能，想保留就整段注释掉）
+DOMAIN-SUFFIX,app-analytics-services.com,REJECT,pre-matching
+DOMAIN-SUFFIX,firebaselogging-pa.googleapis.com,REJECT,pre-matching
+
+[URL Rewrite]
+# iMe 广告投放接口：每进一次频道就拉一次（place=channel），这里直接掐断
+^https?://api\.imem\.me/api/ad/getAd _ reject
+^https?://api\.imem\.me/api/ad/trackLoad _ reject
+# 广告点击跳转与归因
+^https?://api\.imem\.me/ad/fwd _ reject
+
+[MITM]
+hostname = %APPEND% api.imem.me

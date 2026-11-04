@@ -7,6 +7,7 @@ Surge / Loon / Egern 用的 **Sub-Store 节点检测脚本**，逐个节点检�
 | [`gemini.js`](gemini.js) | Gemini 可用性 | 解析 `gemini.google.com` 页面里的落地区域码 |
 | [`gpt.js`](gpt.js) | ChatGPT 可用性 | 请求 OpenAI 端点，检查响应体特征 |
 | [`surge-panel/sub-info.js`](surge-panel/sub-info.js) | Surge 面板：订阅用量 / 到期时间 | 读取订阅的 `subscription-userinfo` 响应头 |
+| [`rules/iMe-AdBlock.sgmodule`](rules/iMe-AdBlock.sgmodule) | iMe 客户端去广告 | 抓包整理的自有广告接口 + 四家联盟域名 |
 
 前两者结构一致，可**串在同一个订阅上**，得到 `[GPT⁺] [Gemini] 香港01` 这样的名称；第三个是 Surge 面板脚本，与订阅处理无关。
 
@@ -468,6 +469,30 @@ Surge 规则是**自上而下、命中即停**。Google 规则写在前，Gemini
 > 这份列表本质是"域名白名单"，Google 推出新 AI 产品时才需要更新（比如 aistudio、notebooklm、jules 都是后来加的），平时**不用频繁维护**。
 >
 > 规则汇编参考了 [blackmatrix7/ios_rule_script](https://github.com/blackmatrix7/ios_rule_script)（GPL-2.0）与 [EAlyce/conf](https://github.com/EAlyce/conf)（MIT）。
+
+---
+
+## rules/iMe-AdBlock.sgmodule — iMe 客户端去广告
+
+给 **iMe**（iMe Messenger，`com.olcorporation.olai`）用的 Surge 模块，拦掉它自己的广告位和四家广告联盟。纯自用，基于 2026-11-05 两轮真机抓包整理，不保证长期有效。
+
+```ini
+https://raw.githubusercontent.com/vaeann/sub-store-scripts/main/rules/iMe-AdBlock.sgmodule
+```
+
+模块会自动把 `api.imem.me` 追加进 MITM 主机名，所以**证书必须已安装并信任**，否则只有域名级规则生效、路径级的广告接口拦不住。
+
+| 拦截对象 | 规则 |
+| --- | --- |
+| iMe 自有广告接口 `api/ad/getAd`、`api/ad/trackLoad`、`ad/fwd` | `[URL Rewrite]` reject（路径级，需 MITM） |
+| 广告素材 CDN `ad.data.imem.me` | `REJECT-TINYGIF` |
+| AppLovin / CAS.AI / Pangle 穿山甲 / Bidease | 域名级 `REJECT` |
+
+### 几个踩过的坑
+
+- **Surge 的 URL Rewrite 只有 `header` / `302` / `307` / `reject` 四种类型**，`reject` 必须三段式（正则 + 占位符 `_` + 类型）。网上常见的 `- reject-dict`、`- reject-200` 是 Loon / QX 语法，Surge 直接报错。
+- **模块不支持 `[Map Local]`**，写进去会被静默忽略。想要"返回空 JSON 不报错"的效果，得把 Map Local 写进主配置。
+- iMe 是多家联盟聚合投放，堵掉 AppLovin/CAS 后它换成了 Pangle + Bidease。以后可能还会换，见到新域名再补。
 
 ---
 
