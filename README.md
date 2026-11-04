@@ -484,7 +484,8 @@ https://raw.githubusercontent.com/vaeann/sub-store-scripts/main/rules/iMe-AdBloc
 
 | 拦截对象 | 规则 |
 | --- | --- |
-| iMe 自有广告接口 `api/ad/getAd`、`api/ad/trackLoad`、`ad/fwd` | `[URL Rewrite]` reject（路径级，需 MITM） |
+| iMe 自有广告接口 `api/ad/getAd` | `[Script]` 置空 payload + **弹通知**（通知里带广告标题） |
+| `api/ad/trackLoad`、`ad/fwd` | `[URL Rewrite]` reject（路径级，需 MITM） |
 | 广告素材 CDN `ad.data.imem.me` | `REJECT-TINYGIF` |
 | AppLovin / CAS.AI / Pangle 穿山甲 / Bidease | 域名级 `REJECT` |
 
