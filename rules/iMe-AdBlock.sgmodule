@@ -1,5 +1,5 @@
 #!name=iMe 去广告
-#!desc=拦截 iMe (com.olcorporation.olai) 自有广告位 + 四家广告联盟（AppLovin / CAS.AI / Pangle 穿山甲 / Bidease）+ 素材 CDN 与统计上报。基于 2026-11-05 两轮抓包。
+#!desc=拦截 iMe (com.olcorporation.olai) 自有广告位 + 四家广告联盟（AppLovin / CAS.AI / Pangle 穿山甲 / Bidease）+ 素材 CDN 与统计上报。getAd 用脚本置空并弹通知，便于验证。基于 2026-11-05 多轮抓包。
 #!author=阿岩
 #!system=ios
 
@@ -33,12 +33,17 @@ DOMAIN-SUFFIX,liftoff.io,REJECT,pre-matching
 DOMAIN-SUFFIX,app-analytics-services.com,REJECT,pre-matching
 DOMAIN-SUFFIX,firebaselogging-pa.googleapis.com,REJECT,pre-matching
 
+[Script]
+# 命中 getAd 时把广告对象置空并推送通知（通知里带广告标题，方便确认接口真的被调用）
+# 脚本地址固定指向本仓库 surge/ime-ad-guard.js
+iMe-ad-guard = type=http-response,pattern=^https?://api\.imem\.me/api/ad/getAd,requires-body=1,max-size=1048576,script-path=https://raw.githubusercontent.com/vaeann/sub-store-scripts/main/surge/ime-ad-guard.js
+
 [URL Rewrite]
-# iMe 广告投放接口：每进一次频道就拉一次（place=channel），这里直接掐断
-^https?://api\.imem\.me/api/ad/getAd _ reject
+# 曝光上报与点击跳转直接掐断（getAd 由上面的脚本处理）
 ^https?://api\.imem\.me/api/ad/trackLoad _ reject
-# 广告点击跳转与归因
 ^https?://api\.imem\.me/ad/fwd _ reject
+# 不想用脚本时可以注释掉上面的 [Script] 整段，改用下面这行（返回错误页，客户端会报解析失败）
+# ^https?://api\.imem\.me/api/ad/getAd _ reject
 
 [MITM]
 hostname = %APPEND% api.imem.me
