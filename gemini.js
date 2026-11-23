@@ -73,7 +73,7 @@
 
 async function operator(proxies = [], targetPlatform, context) {
   const $ = $substore
- // const { isLoon, isSurge, isEgern } = $.env
+  const { isLoon, isSurge, isEgern } = $.env
  // if (!isLoon && !isSurge && !isEgern) throw new Error('仅支持 Loon、Surge 和 Egern')
 
   const includeUnsupportedProxy = bool($arguments.include_unsupported_proxy, false)
